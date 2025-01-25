@@ -41,6 +41,17 @@ services:
     environment:
       K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
 
+  go-app:
+    image: golang
+    container_name: go-app
+    ports:
+      - "4444:4444"
+    entrypoint: ["go", "run", "/go-app/main.go"]
+    volumes:
+      - ./go-app:/go-app
+    networks:
+      - load-testing-network
+
 networks:
   load-testing-network:
     driver: bridge

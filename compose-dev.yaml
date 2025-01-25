@@ -1,0 +1,46 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-remote-write-receiver'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - load-testing-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - load-testing-network
+
+  k6:
+    image: grafana/k6
+    container_name: k6
+    entrypoint: ["/bin/sh", "-c", "while :; do sleep 1; done"]
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      - prometheus
+    networks:
+      - load-testing-network
+    environment:
+      K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+
+networks:
+  load-testing-network:
+    driver: bridge
